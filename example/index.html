@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html ng-app="App-Example">
+<head>
+    <meta charset="UTF-8">
+    <title>Barbara-JS</title>
+    <style>
+        [ng\:cloak], [ng-cloak], [data-ng-cloak], [x-ng-cloak], .ng-cloak, .x-ng-cloak {
+            display: none !important;
+        }
+    </style>
+</head>
+<body ng-controller="AppController" ng-cloak>
+
+    <pre>{{data | json}}</pre>
+
+    <script src="./../bower_components/angular/angular.min.js" type="application/javascript"></script>
+    <script src="./../barbarajs.js" type="application/javascript"></script>
+    <script src="./app.js" type="application/javascript"></script>
+</body>
+</html>

@@ -1,0 +1,28 @@
+{
+  "name": "BarbaraJS",
+  "authors": [
+    "jhorzyto <jhorzyto@gmail.com>"
+  ],
+  "description": "Framework AngularJS da UEMA::NTI",
+  "main": "barbarajs.js",
+  "moduleType": [],
+  "keywords": [
+    "barbarajs",
+    "angularjs",
+    "javascript",
+    "js"
+  ],
+  "license": "MIT",
+  "homepage": "",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "angular": "~1.4.8"
+  }
+}
