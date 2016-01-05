@@ -1,110 +1,204 @@
+//Iniciando o modulo Barbara-JS
 var barbaraJs = angular.module('Barbara-Js', []);
 
+//Configurações para CORS
 barbaraJs.config( function ($httpProvider) {
     $httpProvider.defaults.useXDomain = true;
     delete $httpProvider.defaults.headers.common['X-Requested-With'];
 });
 
+//Factory request para requisições ajax.
 barbaraJs.factory("$request", function($http){
 
-    var callbackSuccess = function(response, request, success, error){
+    //Gerar meta a partir do response
+    var getMetaResponse = function(response){
+        return {
+            code          : response.status,
+            error_message : response.statusText
+        };
+    };
 
+    //Callback quando o response.status for entre 200 e 299.
+    var callbackSuccess = function(response, request, success, error){
+        //Chamar callback de sucesso caso for escolhido para "não" verificar meta no response.data
         if(!request.checkMeta)
             success(response);
 
+        //Chamar callback de error caso o response.data não for um objeto (json)
         else if(!angular.isObject(response.data))
-            error({
-                code          : response.status,
-                error_message : response.statusText
-            }, response.status, response);
+            error(getMetaResponse(response), response.status, response);
 
-        else if(angular.isObject(response.data.meta)){
-            if(response.data.meta.code == 200)
+        //Verificar se há meta no response.data e se existe existe o atributo code para validar a requisição
+        else if(angular.isObject(response.data.meta) && angular.isDefined(response.data.meta.code)){
+
+            //Verificar se o meta.code corresponde ao código de sucesso, então chama o callback de sucesso
+            if(response.data.meta.code >= 200 && response.data.meta.code <= 299)
                 success(response.data.data, response.data.meta, response);
 
+            //Caso o meta.code não estiver entre 200 a 299, retornar como callback de erro.
             else
                 error(response.data.meta, response.status, response);
 
+            //Caso seja definidos callbacks adicionais para determinados meta.code, serão executados aqui após.
             angular.forEach(request.callback, function(callback) {
+                //Verificar se o meta.code do response for igual ao metacode definido pelo callback adicional.
+                // Se for, executa o callback
                 if(this.code == callback.metaCode)
                     callback.callback(response.data.data, response.data.meta, response);
             }, response.data.meta);
 
-        } else
-            error({
-                code          : response.status,
-                error_message : response.statusText
-            }, response.status, response);
+        }
+        //Caso não atenda nenhum dos requisitos, retorna o callback de erro se for definido.
+        else
+            error(getMetaResponse(response), response.status, response);
 
     };
 
-    var callbackError   = function(response, error){
-        error({
-            code          : response.status,
-            error_message : response.statusText
-        }, response.status, response);
+    //Callback quando o response.status for considerado como erro.
+    var callbackError = function(response, error){
+        error(getMetaResponse(response), response.status, response);
     };
 
+    //Atributos e métodos do $request
     return {
-        parameter     : {},
-        headers       : {},
-        method        : 'GET',
-        url           : undefined,
-        callback      : [],
-        checkMeta     : true,
-        response      : undefined,
+        //Lista de parametros ou dados para enviar
+        parameter : {},
+
+        //Lista de cabeçalho adicional, caso necessário
+        headers : {},
+
+        //Método de requisição atual
+        method : 'GET',
+
+        //URL para requisição
+        url : undefined,
+
+        //Lista de Callbacks adicionais
+        callback : [],
+
+        //Verificar o meta no response.data
+        checkMeta : true,
+
+        //Configurações adicional para requisição
+        config : {},
+
+        //Mudar a verificação do meta no response.data
         checkResponse : function(check){
+            //Verifica se o atributo é valido ou não.
             this.checkMeta = check ? true : false;
             return this;
         },
-        addCallback   : function(metaCode, callback){
+
+        //Adicionar callbacks adicionais para o meta.code
+        addCallback : function(metaCode, callback){
+            //Verficar se o metaCode é um número e o callback é função.
+            // Se a condição for valida, adiciona o callback na lista
             if(angular.isNumber(metaCode) && angular.isFunction(callback))
                 this.callback.push({ metaCode : metaCode, callback : callback });
             return this;
         },
-        addMethod     : function(method){
+
+        //Adicionar método de requisição
+        addMethod : function(method){
+            //Verificar se o method é string, para adicionar ao método de requisição
             this.method = angular.isString(method) ? method : 'GET';
             return this;
         },
-        addData       : function(param){
+
+        //Adicionar dados ou parametros para enviar
+        addData : function(param){
+            //Verificar se o param é objeto, para adicionar ao dados/param para enviar
             this.parameter = angular.isObject(param) ? param : {};
             return this;
         },
-        addHeaders    : function(headers){
+
+        //Adicionar cabeçalho adicional
+        addHeaders : function(headers){
+            //Verificar se o headers é objeto, para adicionar ao cabeçalho adicional
             this.headers = angular.isObject(headers) ? headers : {};
             return this;
         },
-        get           : function(url){
-            this.url = angular.isString(url) ? url : this.url;
-            this.addMethod('GET');
-            return angular.copy(this);
-        },
-        post          : function(url){
-            this.url = angular.isString(url) ? url : this.url;
-            this.addMethod('POST');
-            return angular.copy(this);
-        },
-        put           : function(url){
-            this.url = angular.isString(url) ? url : this.url;
-            this.addMethod('PUT');
-            return angular.copy(this);
-        },
-        delete        : function(url){
-            this.url = angular.isString(url) ? url : this.url;
-            this.addMethod('DELETE');
-            return angular.copy(this);
-        },
-        send          : function(success, error){
 
+        //Obter $request para requisição get
+        get : function(url){
+            //Verificar se o url é string para adicionar ao url atual.
+            this.url = angular.isString(url) ? url : this.url;
+            //Mudar o método de requisição
+            this.addMethod('GET');
+            //Ajustar as configurações adicionais da requisição
+            this.config = {
+                headers : this.headers
+            };
+            this.config.params = this.parameter;
+            //Retornar copia do objeto.
+            return angular.copy(this);
+        },
+
+        //Obter $request para requisição post
+        post : function(url){
+            //Verificar se o url é string para adicionar ao url atual.
+            this.url = angular.isString(url) ? url : this.url;
+            //Mudar o método de requisição
+            this.addMethod('POST');
+            //Ajustar as configurações adicionais da requisição
+            this.config = {
+                headers : this.headers
+            };
+            //Retornar copia do objeto.
+            return angular.copy(this);
+        },
+
+        //Obter $request para requisição put
+        put : function(url){
+            //Verificar se o url é string para adicionar ao url atual.
+            this.url = angular.isString(url) ? url : this.url;
+            //Mudar o método de requisição
+            this.addMethod('PUT');
+            //Ajustar as configurações adicionais da requisição
+            this.config = {
+                headers : this.headers
+            };
+            //Retornar copia do objeto.
+            return angular.copy(this);
+        },
+
+        //Obter $request para requisição delete
+        delete : function(url){
+            //Verificar se o url é string para adicionar ao url atual.
+            this.url = angular.isString(url) ? url : this.url;
+            //Mudar o método de requisição
+            this.addMethod('DELETE');
+            //Ajustar as configurações adicionais da requisição
+            this.config = {
+                headers : this.headers
+            };
+            this.config.params = this.parameter;
+            //Retornar copia do objeto.
+            return angular.copy(this);
+        },
+
+        //Enviar requisição
+        send : function(success, error){
+            //Atribuir a referencia do objeto para variavel request
             var request = this;
 
-            if(!angular.isFunction(success) || !angular.isFunction(error))
-                throw "Callback invalid in $request!";
+            //Verificar se o parametro success é uma função
+            if(!angular.isFunction(success))
+                throw "Success Callback invalid in $request!";
 
+            //Caso não exista callback de erro, criar um.
+            if(!angular.isFunction(error))
+                error = function(){};
+
+            //Verificar se algum url foi definido para continuar a requisição
+            if(!angular.isDefined(request.url))
+                throw "No url defined in the request methods!";
+
+            //Escolher qual método executar de acordo com o armazenado em request.method
             switch (request.method){
 
                 case 'GET' :
-                    $http.get(request.url, { params: request.parameter, headers : request.headers })
+                    $http.get(request.url, request.config)
                          .then(function(response){
                              callbackSuccess(response, request, success, error);
                          }, function(response){
@@ -113,7 +207,7 @@ barbaraJs.factory("$request", function($http){
                 break;
 
                 case 'POST' :
-                    $http.post(request.url, request.parameter, { headers : request.headers })
+                    $http.post(request.url, request.parameter, request.config)
                         .then(function(response){
                             callbackSuccess(response, request, success, error);
                         }, function(response){
@@ -122,7 +216,7 @@ barbaraJs.factory("$request", function($http){
                 break;
 
                 case 'PUT' :
-                    $http.put(request.url, request.parameter, { headers : request.headers })
+                    $http.put(request.url, request.parameter, request.config)
                         .then(function(response){
                             callbackSuccess(response, request, success, error);
                         }, function(response){
@@ -131,7 +225,7 @@ barbaraJs.factory("$request", function($http){
                 break;
 
                 case 'DELETE' :
-                    $http.delete(request.url, { params: request.parameter, headers : request.headers })
+                    $http.delete(request.url, request.config)
                         .then(function(response){
                             callbackSuccess(response, request, success, error);
                         }, function(response){
@@ -143,28 +237,57 @@ barbaraJs.factory("$request", function($http){
     };
 });
 
-barbaraJs.factory("Bootstrap", function(){
+//Factory bootstrap para alguns recursos do framework css
+barbaraJs.factory("bootstrap", function(){
     return {
+        //Configuração do alert para diretiva (alert-bootstrap)
         alert : function(){
             return {
-                show          : false,
-                changeShow    : function( show ){
+                //Visibilidade da diretiva
+                show : false,
+
+                //Mudar Visibilidade da direitva
+                changeShow : function( show ){
                     this.show = angular.isDefined(show) ? show : !this.show;
                 },
-                type          : undefined,
-                changeType    : function(type){
+
+                //Tipo de alerta (info, success, danger, warning)
+                type : undefined,
+
+                //Mudar tipo de alerta
+                changeType : function(type){
                     this.type = type;
                 },
-                title         : undefined,
-                changeTitle   : function(title){
+
+                //Título do alerta
+                title : undefined,
+
+                //Mudar título do alerta
+                changeTitle : function(title){
                     this.title = title;
                 },
-                message       : undefined,
+
+                //Mensagem do alerta
+                message : undefined,
+
+                //Mudar mensagem do alerta
                 changeMessage : function(message){
                     this.message = message;
                 },
-                responseError : function(meta){
 
+                //Personalizar alerta para response de sucesso
+                responseSuccess : function(message){
+                    if(angular.isString(message)) {
+                        this.changeTitle('Parabéns!');
+                        this.changeType('success');
+                        this.changeMessage(message);
+                        this.changeShow(true);
+                    }
+                },
+
+                //Personalizar alerta para response de erro
+                responseError : function(meta){
+                    this.changeTitle('Algo deu errado!');
                     this.changeType('danger');
 
                     if(angular.isDefined(meta.error_message) && angular.isString(meta.error_message)){
@@ -173,18 +296,110 @@ barbaraJs.factory("Bootstrap", function(){
                     } else
                         this.changeMessage("Ocorreu um erro na requisição! Talvez o servidor " +
                                            "esteja em manutenção.");
+                    this.changeShow(true);
                 }
             };
         }
     };
 });
 
-barbaraJs.directive( 'alertBootstrap', function (pathPlugin) {
+//Direitava alert-bootstrap
+barbaraJs.directive('alertBootstrap', function () {
     return {
-        restrict    : 'A',
-        templateUrl : pathPlugin + 'view/directive/alert.html',
-        link        : function( scope, link, attr ){
+        restrict : 'A',
+        //Template html da diretiva
+        template : "<div class='alert alert-{{alert.type}} alert-dismissible' role='alert' ng-if='alert.show'>"
+                 + "<button type='button' class='close' ng-click='alert.changeShow()'>"
+                 + "<span aria-hidden='true'>&times;</span>"
+                 + "</button>"
+                 + "<strong>{{alert.title}}</strong> {{alert.message}}"
+                 + "</div>"
+    };
+});
 
-        }
+//Filtro para mostrar data de forma mais amigável ex: (há 7d, há 32sm, há 4a)
+barbaraJs.filter("timeago", function () {
+
+    return function (time) {
+        //Variavel para hora atual
+        var local = new Date().getTime();
+
+        //Verificar se há algum dado
+        if (!time)
+            return "indefinido";
+
+        //Verificar se time é um objeto Date
+        if (angular.isDate(time))
+            time = time.getTime();
+
+        //Verificar se o time é um timestamp
+        else if (angular.isNumber(time))
+            time = new Date(time * 1000).getTime();
+
+        //Verificar se o time é uma data em string
+        else if (angular.isString(time))
+            time = new Date(time).getTime();
+
+        //Verificar se retornou uma data válida
+        if (!angular.isNumber(time))
+            return "Data invalida";
+
+        //Atributos de configurações para calculos
+        var offset = Math.abs((local - time) / 1000),
+            span = [],
+            MINUTE = 60,
+            HOUR = 3600,
+            DAY = 86400,
+            WEEK = 604800,
+            YEAR = 31556926;
+
+        //Calculos para determinar o tempo decorrido
+        if (offset <= MINUTE)              span = [ '', 'agora' ];
+        else if (offset < (MINUTE * 60))   span = [ Math.round(Math.abs(offset / MINUTE)), 'm' ];
+        else if (offset < (HOUR * 24))     span = [ Math.round(Math.abs(offset / HOUR)), 'h' ];
+        else if (offset < (DAY * 7))       span = [ Math.round(Math.abs(offset / DAY)), 'd' ];
+        else if (offset < (WEEK * 52))     span = [ Math.round(Math.abs(offset / WEEK)), 'sm' ];
+        else if (offset < (YEAR * 10))     span = [ Math.round(Math.abs(offset / YEAR)), 'a' ];
+        else                               span = [ '', '...' ];
+
+        //Transformar array em string separado por espaço
+        span = span.join('');
+
+        //Retornar data em formato decorrido
+        return (time <= local) ? 'há ' + span + '' : span;
+    }
+});
+
+//Filtro para truncar texto com opção de ignorar dinamicamente
+barbaraJs.filter('cuttext', function () {
+    return function (value, ignoreFilter, max, tail) {
+        //Verificar se o valor é valido
+        if (!value || !angular.isString(value))
+            return '';
+
+        //Verificar se o tamanho maximo do texto é um número valido, caso contrario retorna o valor original
+        if (!max || !angular.isNumber(max))
+            return value;
+
+        //Converter maximo para inteiro
+        max = parseInt(max, 10);
+
+        //Verificar se o tamanho do texto é menor que o tamanho máximo ou se o filtro foi ignorado
+        //Caso a condição seja verdadeira, retornar o valor original
+        if (value.length <= max || ignoreFilter)
+            return value;
+
+        //Trunca o texto para o tamanho definido
+        value = value.substr(0, max);
+
+        //Verifica se o ultimo elemento do texto é um espaço
+        var lastspace = value.lastIndexOf(' ');
+
+        //Caso o ultimo elemento seja um espaço, ele é truncado novamente
+        if (lastspace != -1)
+            value = value.substr(0, lastspace);
+
+        //Retornar texto formatado
+        return value + (tail || ' …');
     };
 });
