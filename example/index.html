@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html ng-app="App-Example">
+
 <head>
     <meta charset="UTF-8">
     <title>Barbara-JS</title>
@@ -8,13 +9,30 @@
             display: none !important;
         }
     </style>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap-theme.min.css" integrity="sha384-fLW2N01lMqjakBkx3l/M9EahuwpSfeNvV63J5ezn3uZzapT0u7EYsXMjQV+0En5r" crossorigin="anonymous">
 </head>
+
 <body ng-controller="AppController" ng-cloak>
 
-    <pre>{{data | json}}</pre>
+    <div class="container-fluid">
 
+        <div alert-bootstrap></div>
+
+        <pre ng-init="completo = false">
+            {{"2015-05-06"|timeago}}
+            {{ "sfsdfsfsfsfsfsdfsdfsdfsfsdfsdfdf" | cuttext: completo: 10 }}
+        </pre>
+        <button ng-click="completo = !completo">
+            {{completo ? 'Exibir menos' : 'Exibir tudo'}}
+        </button>
+    </div>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
     <script src="./../bower_components/angular/angular.min.js" type="application/javascript"></script>
     <script src="./../barbarajs.js" type="application/javascript"></script>
     <script src="./app.js" type="application/javascript"></script>
 </body>
+
 </html>

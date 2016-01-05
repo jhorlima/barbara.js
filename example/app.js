@@ -5,7 +5,8 @@ app.service("AppService", function($request){
     this.getData = function(data, success, error){
         $request.get('http://localhost/rest.php')
                 .addData(data)
-                .send(success, error);
+                .addCallback(501, error)
+                .send(success);
     };
 
     this.getData2 = function(data, success, error){
@@ -18,11 +19,15 @@ app.service("AppService", function($request){
     };
 });
 
-app.controller('AppController', function($scope, AppService) {
+app.controller('AppController', function($scope, AppService, bootstrap) {
 
-    AppService.getData({bla: 'bla'}, function(data){
-        console.debug(data);
+    $scope.alert = bootstrap.alert();
+
+    AppService.getData({bla: 'bla'}, function(a,b,c){
+        $scope.data = {a: a, b: b, c: c };
+        $scope.alert.responseSuccess('Você recebeu os dados com successo!');
     }, function(data){
+        $scope.alert.responseError(data);
         console.log(data);
     });
 
