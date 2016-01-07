@@ -2,9 +2,35 @@
 var barbaraJs = angular.module('Barbara-Js', []);
 
 //Configurações para CORS
-barbaraJs.config( function ($httpProvider) {
+barbaraJs.config(function ($httpProvider) {
     $httpProvider.defaults.useXDomain = true;
     delete $httpProvider.defaults.headers.common['X-Requested-With'];
+});
+
+//Inicializador do barbaraJs
+barbaraJs.run(function(){
+    //Animação para icone de carregamento
+    //CSS não minificado
+    //
+    //.glyphicon.spinning {
+    //    animation: spin 1s infinite linear;
+    //    -webkit-animation: spin2 1s infinite linear;
+    //}
+    //
+    //@keyframes spin {
+    //    from { transform: scale(1) rotate(0deg); }
+    //    to { transform: scale(1) rotate(360deg); }
+    //}
+    //
+    //@-webkit-keyframes spin2 {
+    //    from { -webkit-transform: rotate(0deg); }
+    //    to { -webkit-transform: rotate(360deg); }
+    //}
+    //
+    var loadingStyle = "<style type='text/css'>.glyphicon.spinning{animation:spin 1s infinite linear;-webkit-animation:spin2 1s infinite linear}@keyframes spin{from{transform:scale(1) rotate(0)}to{transform:scale(1) rotate(360deg)}}@-webkit-keyframes spin2{from{-webkit-transform:rotate(0)}to{-webkit-transform:rotate(360deg)}}</style>";
+
+    //Atribuindo o style ao cabeçalho do HTML
+    angular.element(document).find('head').prepend(loadingStyle);
 });
 
 //Factory request para requisições ajax.
@@ -14,12 +40,16 @@ barbaraJs.factory("$request", function($http){
     var getMetaResponse = function(response){
         return {
             code          : response.status,
-            error_message : response.statusText
+            error_message : response.status == 200 ? 'Bad structure response!' : response.statusText
         };
     };
 
     //Callback quando o response.status for entre 200 e 299.
     var callbackSuccess = function(response, request, success, error){
+        //Verificar se algum callback de loaded
+        if(angular.isDefined(request.callbackLoad))
+            request.callbackLoad.loaded();
+
         //Chamar callback de sucesso caso for escolhido para "não" verificar meta no response.data
         if(!request.checkMeta)
             success(response);
@@ -55,7 +85,11 @@ barbaraJs.factory("$request", function($http){
     };
 
     //Callback quando o response.status for considerado como erro.
-    var callbackError = function(response, error){
+    var callbackError = function(response, request, error){
+        //Verificar se algum callback de loaded
+        if(angular.isDefined(request.callbackLoad))
+            request.callbackLoad.loaded();
+
         error(getMetaResponse(response), response.status, response);
     };
 
@@ -75,6 +109,9 @@ barbaraJs.factory("$request", function($http){
 
         //Lista de Callbacks adicionais
         callback : [],
+
+        //Configurações adicional para requisição
+        callbackLoad : undefined,
 
         //Verificar o meta no response.data
         checkMeta : true,
@@ -119,6 +156,31 @@ barbaraJs.factory("$request", function($http){
             return this;
         },
 
+        //Adicionar callback de carregamento.
+        load : function(onLoading, loaded){
+
+            //Verificar se o onLoading é um objeto do bootstrap.loading
+            if(angular.isObject(onLoading)){
+                //Verificar se os callbacks loading e loaded existem
+                if(angular.isFunction(onLoading.loading) && angular.isFunction(onLoading.loaded)){
+                    loaded = onLoading.loaded;
+                    onLoading = onLoading.loading;
+                }
+            }
+
+            //Verificar se onLoading e loaded são callbacks validos!
+            if(!angular.isFunction(onLoading) || !angular.isFunction(loaded))
+                throw "Load Callback invalid!";
+
+            //atribuindo os callbacks à variavel callbackLoad
+            this.callbackLoad = {
+                onLoading : onLoading,
+                loaded : loaded
+            };
+
+            return this;
+        },
+
         //Obter $request para requisição get
         get : function(url){
             //Verificar se o url é string para adicionar ao url atual.
@@ -126,10 +188,7 @@ barbaraJs.factory("$request", function($http){
             //Mudar o método de requisição
             this.addMethod('GET');
             //Ajustar as configurações adicionais da requisição
-            this.config = {
-                headers : this.headers
-            };
-            this.config.params = this.parameter;
+            this.config.headers = this.headers;
             //Retornar copia do objeto.
             return angular.copy(this);
         },
@@ -141,9 +200,7 @@ barbaraJs.factory("$request", function($http){
             //Mudar o método de requisição
             this.addMethod('POST');
             //Ajustar as configurações adicionais da requisição
-            this.config = {
-                headers : this.headers
-            };
+            this.config.headers = this.headers;
             //Retornar copia do objeto.
             return angular.copy(this);
         },
@@ -155,9 +212,7 @@ barbaraJs.factory("$request", function($http){
             //Mudar o método de requisição
             this.addMethod('PUT');
             //Ajustar as configurações adicionais da requisição
-            this.config = {
-                headers : this.headers
-            };
+            this.config.headers = this.headers;
             //Retornar copia do objeto.
             return angular.copy(this);
         },
@@ -169,10 +224,7 @@ barbaraJs.factory("$request", function($http){
             //Mudar o método de requisição
             this.addMethod('DELETE');
             //Ajustar as configurações adicionais da requisição
-            this.config = {
-                headers : this.headers
-            };
-            this.config.params = this.parameter;
+            this.config.headers = this.headers;
             //Retornar copia do objeto.
             return angular.copy(this);
         },
@@ -194,15 +246,20 @@ barbaraJs.factory("$request", function($http){
             if(!angular.isDefined(request.url))
                 throw "No url defined in the request methods!";
 
+            //Verificar se algum callback de loading
+            if(angular.isDefined(request.callbackLoad))
+                request.callbackLoad.onLoading();
+
             //Escolher qual método executar de acordo com o armazenado em request.method
             switch (request.method){
 
                 case 'GET' :
+                    request.config.params = request.parameter;
                     $http.get(request.url, request.config)
                          .then(function(response){
                              callbackSuccess(response, request, success, error);
                          }, function(response){
-                             callbackError(response, error);
+                             callbackError(response, request, error);
                          });
                 break;
 
@@ -211,7 +268,7 @@ barbaraJs.factory("$request", function($http){
                         .then(function(response){
                             callbackSuccess(response, request, success, error);
                         }, function(response){
-                            callbackError(response, error);
+                            callbackError(response, request, error);
                         });
                 break;
 
@@ -220,16 +277,17 @@ barbaraJs.factory("$request", function($http){
                         .then(function(response){
                             callbackSuccess(response, request, success, error);
                         }, function(response){
-                            callbackError(response, error);
+                            callbackError(response, request, error);
                         });
                 break;
 
                 case 'DELETE' :
+                    request.config.data = request.parameter;
                     $http.delete(request.url, request.config)
                         .then(function(response){
                             callbackSuccess(response, request, success, error);
                         }, function(response){
-                            callbackError(response, error);
+                            callbackError(response, request, error);
                         });
                 break;
             }
@@ -272,7 +330,7 @@ barbaraJs.factory("bootstrap", function(){
 
                 //Mudar mensagem do alerta
                 changeMessage : function(message){
-                    this.message = message;
+                    this.message = angular.isString(message) ? message : this.message;
                 },
 
                 //Personalizar alerta para response de sucesso
@@ -299,6 +357,51 @@ barbaraJs.factory("bootstrap", function(){
                     this.changeShow(true);
                 }
             };
+        },
+
+        //Configuração do loading para diretiva (loading-bootstrap)
+        loading : function(){
+            return {
+                //Visibilidade da diretiva
+                show : false,
+
+                //Mudar Visibilidade da direitva
+                changeShow : function( show ){
+                    this.show = angular.isDefined(show) ? show : !this.show;
+                },
+
+                //Mensagem de loading
+                message : 'Carregando...',
+
+                //Mudar mensagem do loading
+                changeMessage : function(message){
+                    this.message = angular.isString(message) ? message : this.message;
+                },
+
+                //Mostrar mensagem de carregamento
+                onLoading : function(message){
+                    this.message = angular.isString(message) ? message : this.message;
+                    this.changeShow(true);
+                },
+
+                //Deixar de exibir mensagem de carregamento
+                loaded : function(){
+                    this.changeShow(false);
+                },
+
+                //Obter loading trabalhado para o $request
+                getRequestLoad : function(message){
+                    var loading = this;
+                    return {
+                        loading : function(){
+                            loading.onLoading(message);
+                        },
+                        loaded : function(){
+                            loading.loaded();
+                        }
+                    };
+                }
+            };
         }
     };
 });
@@ -308,12 +411,33 @@ barbaraJs.directive('alertBootstrap', function () {
     return {
         restrict : 'A',
         //Template html da diretiva
-        template : "<div class='alert alert-{{alert.type}} alert-dismissible' role='alert' ng-if='alert.show'>"
-                 + "<button type='button' class='close' ng-click='alert.changeShow()'>"
-                 + "<span aria-hidden='true'>&times;</span>"
-                 + "</button>"
-                 + "<strong>{{alert.title}}</strong> {{alert.message}}"
-                 + "</div>"
+        //HTML Template não minificado
+        //
+        //<div class='alert alert-{{alert.type}} alert-dismissible' role='alert' ng-if='alert.show'>
+        //  <button type='button' class='close' ng-click='alert.changeShow()'>
+        //      <span aria-hidden='true'>&times;</span>
+        //  </button>
+        //  <strong>{{alert.title}}</strong> {{alert.message}}
+        //</div>
+        //
+        template : "<div class='alert alert-{{alert.type}} alert-dismissible' role='alert' ng-if='alert.show'><button type='button' class='close' ng-click='alert.changeShow()'><span aria-hidden='true'>&times;</span></button><strong>{{alert.title}}</strong> {{alert.message}}</div>"
+    };
+});
+
+//Direitava loading-bootstrap
+barbaraJs.directive('loadingBootstrap', function () {
+    return {
+        restrict : 'A',
+        //Template html da diretiva
+        //HTML Template não minificado
+        //
+        //<div class='progress' ng-if='loading.show'>
+        //    <div class='progress-bar progress-bar-striped active' role='progressbar' style='width: 100%'>
+        //        <i class='glyphicon glyphicon-refresh spinning'></i> <strong>{{loading.message}}</strong>
+        //    </div>
+        //</div>
+        //
+        template : "<div class='progress' ng-if='loading.show'> <div class='progress-bar progress-bar-striped active' role='progressbar' style='width: 100%'><i class='glyphicon glyphicon-refresh spinning'></i> <strong>{{loading.message}}</strong></div></div>"
     };
 });
 
