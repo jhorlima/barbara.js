@@ -402,6 +402,141 @@ barbaraJs.factory("bootstrap", function(){
                     };
                 }
             };
+        },
+
+        //Configuração do pagination para diretiva (pagination-bootstrap)
+        pagination : function(){
+            return {
+                //Quantidade de páginas disponíveis
+                pages : 0,
+
+                //Página atual
+                currentPage : 1,
+
+                //Lista de páginas processadas
+                pagination : [],
+
+                //Callback para executar após mudar a página
+                callback : undefined,
+
+                //Adicionar Callback validando o mesmo
+                changeCallback : function(callback){
+                    this.callback = angular.isFunction(callback) ? callback : this.callback;
+                },
+
+                //Alterar a quantidade de páginas e refazendo a páginação
+                changePages : function(pages){
+                    this.pages = angular.isNumber(pages) ? pages : this.pages;
+                    this.processPagination();
+                },
+
+                //Alterar a página atual e validar a mesma
+                changeCurrentPage : function(currentPage){
+                    this.currentPage = angular.isNumber(currentPage) && currentPage > 0
+                                                                     && currentPage <= this.pages ?
+                                       currentPage : this.currentPage;
+                    return currentPage == this.currentPage ? true : false;
+                },
+
+                //Procesar páginação de acordo com o número de páginas e a página atual
+                processPagination : function(){
+
+                    //Verificar se há páginas
+                    if(this.pages == 0)
+                        return;
+
+                    //Definir lista de paginação como vazia
+                    this.pagination = [];
+
+                    //1 Botão
+                    this.pagination.push({
+                        item : 1,
+                        role : this.pages > 0
+                    });
+
+                    //2 Botão
+                    this.pagination.push({
+                        item : this.pages <= 9 ? 2 :
+                            this.currentPage <= 5 ? 2 : undefined,
+                        role : this.pages > 2
+                    });
+
+                    //3 Botão
+                    this.pagination.push({
+                        item : this.pages <= 9 || this.currentPage <= 5 ? 3 :
+                            this.currentPage + 5 >= this.pages ? this.pages - 6 :
+                            this.currentPage - 2,
+                        role : this.pages > 3
+                    });
+
+                    //4 Botão
+                    this.pagination.push({
+                        item : this.pages <= 9 || this.currentPage <= 5 ? 4 :
+                            this.currentPage + 5 >= this.pages ? this.pages - 5 :
+                            this.currentPage - 1,
+                        role : this.pages > 4
+                    });
+
+                    //5 Botão
+                    this.pagination.push({
+                        item : this.pages <= 9 || this.currentPage <= 5 ? 5 :
+                            this.currentPage + 5 >= this.pages ? this.pages - 4 :
+                                this.currentPage,
+                        role : this.pages > 5
+                    });
+
+                    //6 Botão
+                    this.pagination.push({
+                        item : this.pages <= 9 || this.currentPage <= 5 ? 6 :
+                            this.currentPage + 5 >= this.pages ? this.pages - 3 :
+                            this.currentPage + 1,
+                        role : this.pages > 6
+                    });
+
+                    //7 Botão
+                    this.pagination.push({
+                        item : this.pages <= 9 || this.currentPage <= 5 ? 7 :
+                            this.currentPage + 5 >= this.pages ? this.pages - 2 :
+                            this.currentPage + 2,
+                        role : this.pages > 7
+                    });
+
+                    //8 Botão
+                    this.pagination.push({
+                        item : this.pages <= 9 ? 8 :
+                            this.pages == 10 && this.currentPage == 5 ? undefined :
+                                this.currentPage + 5 >= this.pages ? this.pages - 1 :
+                                    undefined,
+                        role : this.pages > 8
+                    });
+
+                    //9 Botão
+                    this.pagination.push({
+                        item : this.pages,
+                        role : this.pages > 1
+                    });
+
+                    //Definir classes css para cada botão
+                    angular.forEach(this.pagination, function(page){
+                        page.class = {
+                            active : this.currentPage == page.item,
+                            disabled : angular.isUndefined(page.item)
+                        }
+                    }, this);
+                },
+
+                //Ação do clique do botão
+                clickAction : function(page){
+                    if(angular.isDefined(page) && this.changeCurrentPage(page)){
+
+                        if(angular.isFunction(this.callback)){
+                            this.changePages(0);
+                            this.callback(this);
+                        } else
+                            this.processPagination();
+                    }
+                }
+            }
         }
     };
 });
@@ -438,6 +573,29 @@ barbaraJs.directive('loadingBootstrap', function () {
         //</div>
         //
         template : "<div class='progress' ng-if='loading.show'> <div class='progress-bar progress-bar-striped active' role='progressbar' style='width: 100%'><i class='glyphicon glyphicon-refresh spinning'></i> <strong>{{loading.message}}</strong></div></div>"
+    };
+});
+
+//Direitava pagination-bootstrap
+barbaraJs.directive('paginationBootstrap', function () {
+    return {
+        restrict : 'A',
+        //Template html da diretiva
+        //HTML Template não minificado
+        //
+        //<nav ng-if="pagination.pages > 0">
+        //    <ul class="pagination">
+        //        <li ng-repeat="page in pagination.pagination"
+        //            ng-if="page.role"
+        //            ng-class="page.class">
+        //            <a href="" ng-click="pagination.clickAction(page.item)">
+        //                {{page.item ? page.item : '...'}}
+        //            </a>
+        //        </li>
+        //    </ul>
+        //</nav>
+        //
+        template : "<nav ng-if='pagination.pages > 0'> <ul class='pagination'> <li ng-repeat='page in pagination.pagination' ng-if='page.role' ng-class='page.class'> <a href='' ng-click='pagination.clickAction(page.item)'>{{page.item ? page.item : '...'}}</a> </li></ul> </nav>"
     };
 });
 
