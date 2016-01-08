@@ -2,19 +2,10 @@ var app = angular.module('App-Example', ['Barbara-Js']);
 
 app.service("AppService", function($request){
 
-    this.getData = function(data, success, error){
-        $request.get('http://localhost/rest.php')
+    this.getData = function(data, success, error, load){
+        $request.get('http://localhost/moca_bonita/')
                 .addData(data)
-                .addCallback(501, error)
-                .send(success);
-    };
-
-    this.getData2 = function(data, success, error){
-        $request.delete('http://localhost/rest.php')
-                .addData(data)
-                .addCallback(401, function(){
-                    console.log("teste");
-                })
+                .load(load)
                 .send(success, error);
     };
 });
@@ -22,18 +13,28 @@ app.service("AppService", function($request){
 app.controller('AppController', function($scope, AppService, bootstrap) {
 
     $scope.alert = bootstrap.alert();
+    $scope.loading = bootstrap.loading();
+    $scope.pagination = bootstrap.pagination();
 
-    AppService.getData({bla: 'bla'}, function(a,b,c){
-        $scope.data = {a: a, b: b, c: c };
-        $scope.alert.responseSuccess('Você recebeu os dados com successo!');
-    }, function(data){
-        $scope.alert.responseError(data);
-        console.log(data);
-    });
+    $scope.requestData = function(pagination){
 
-    AppService.getData2({bla1: 'bla2'}, function(data){
-        console.debug(data);
-    }, function(data){
-        console.log(data);
-    });
+        AppService.getData({
+            page : 'pessoa',
+            action : 'teste',
+            currentPage : pagination.currentPage
+        }, function(data){
+            $scope.data = data;
+            pagination.changePages(data.pagination.pages);
+            $scope.alert.responseSuccess('Você recebeu os dados com successo!');
+        }, function(meta){
+            $scope.data = meta;
+            $scope.alert.responseError(meta);
+        }, $scope.loading.getRequestLoad('Carregando informações..'));
+
+    };
+
+    $scope.pagination.changeCallback($scope.requestData);
+
+    $scope.requestData($scope.pagination);
+
 });

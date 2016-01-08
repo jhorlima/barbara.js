@@ -17,15 +17,28 @@
 
     <div class="container-fluid">
 
+        <hr>
+
         <div alert-bootstrap></div>
 
+        <hr>
+
+        <div pagination-bootstrap></div>
+
+        <hr>
+
+        <div loading-bootstrap></div>
+
+        <pre>{{data | json}}</pre>
         <pre ng-init="completo = false">
             {{"2015-05-06"|timeago}}
             {{ "sfsdfsfsfsfsfsdfsdfsdfsfsdfsdfdf" | cuttext: completo: 10 }}
         </pre>
+
         <button ng-click="completo = !completo">
             {{completo ? 'Exibir menos' : 'Exibir tudo'}}
         </button>
+
     </div>
 
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
