@@ -3,6 +3,7 @@
   "authors": [
     "jhorzyto <jhorzyto@gmail.com>"
   ],
+  "version" : "v1.0",
   "description": "Framework AngularJS da UEMA::NTI",
   "main": "barbarajs.js",
   "moduleType": [],
