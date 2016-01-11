@@ -1,3 +1,9 @@
+/*
+ BarbaraJS v1.0.0
+ (c) 2016 Jhordan Lima.
+ License: MIT
+ */
+
 //Iniciando o modulo Barbara-JS
 var barbaraJs = angular.module('Barbara-Js', []);
 
@@ -420,7 +426,7 @@ barbaraJs.factory("bootstrap", function(){
                 callback : undefined,
 
                 //Adicionar Callback validando o mesmo
-                changeCallback : function(callback){
+                changePageCallback : function(callback){
                     this.callback = angular.isFunction(callback) ? callback : this.callback;
                 },
 
