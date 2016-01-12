@@ -1,8 +1,8 @@
 /*
- BarbaraJS v1.0.0
- (c) 2016 Jhordan Lima.
+ BarbaraJS v1.0.1
+ (c) 2016 Jhordan Lima. https://github.com/Jhorzyto/barbara.js
  License: MIT
- */
+*/
 
 //Iniciando o modulo Barbara-JS
 var barbaraJs = angular.module('Barbara-Js', []);
@@ -193,8 +193,6 @@ barbaraJs.factory("$request", function($http){
             this.url = angular.isString(url) ? url : this.url;
             //Mudar o método de requisição
             this.addMethod('GET');
-            //Ajustar as configurações adicionais da requisição
-            this.config.headers = this.headers;
             //Retornar copia do objeto.
             return angular.copy(this);
         },
@@ -205,8 +203,6 @@ barbaraJs.factory("$request", function($http){
             this.url = angular.isString(url) ? url : this.url;
             //Mudar o método de requisição
             this.addMethod('POST');
-            //Ajustar as configurações adicionais da requisição
-            this.config.headers = this.headers;
             //Retornar copia do objeto.
             return angular.copy(this);
         },
@@ -217,8 +213,6 @@ barbaraJs.factory("$request", function($http){
             this.url = angular.isString(url) ? url : this.url;
             //Mudar o método de requisição
             this.addMethod('PUT');
-            //Ajustar as configurações adicionais da requisição
-            this.config.headers = this.headers;
             //Retornar copia do objeto.
             return angular.copy(this);
         },
@@ -229,8 +223,6 @@ barbaraJs.factory("$request", function($http){
             this.url = angular.isString(url) ? url : this.url;
             //Mudar o método de requisição
             this.addMethod('DELETE');
-            //Ajustar as configurações adicionais da requisição
-            this.config.headers = this.headers;
             //Retornar copia do objeto.
             return angular.copy(this);
         },
@@ -255,6 +247,9 @@ barbaraJs.factory("$request", function($http){
             //Verificar se algum callback de loading
             if(angular.isDefined(request.callbackLoad))
                 request.callbackLoad.onLoading();
+
+            //Ajustar as configurações adicionais da requisição
+            request.config.headers = request.headers;
 
             //Escolher qual método executar de acordo com o armazenado em request.method
             switch (request.method){
@@ -320,7 +315,7 @@ barbaraJs.factory("bootstrap", function(){
 
                 //Mudar tipo de alerta
                 changeType : function(type){
-                    this.type = type;
+                    this.type = angular.isString(type) ? type : this.type;
                 },
 
                 //Título do alerta
@@ -328,7 +323,7 @@ barbaraJs.factory("bootstrap", function(){
 
                 //Mudar título do alerta
                 changeTitle : function(title){
-                    this.title = title;
+                    this.title = angular.isString(title) ? title : this.title;
                 },
 
                 //Mensagem do alerta

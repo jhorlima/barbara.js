@@ -1,9 +1,9 @@
 {
-  "name": "BarbaraJS",
+  "name": "barbara-js",
   "authors": [
     "jhorzyto <jhorzyto@gmail.com>"
   ],
-  "version" : "v1.0",
+  "version" : "v1.0.1",
   "description": "Framework AngularJS da UEMA::NTI",
   "main": "barbarajs.js",
   "moduleType": [],
@@ -14,7 +14,7 @@
     "js"
   ],
   "license": "MIT",
-  "homepage": "",
+  "homepage": "https://github.com/Jhorzyto/barbara.js",
   "private": false,
   "ignore": [
     "**/.*",
