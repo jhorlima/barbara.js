@@ -20,7 +20,7 @@ bower install barbara-js
 Em seguida, referenciar o script minificado:
 
 ```html
-<script src="bower_components\barbara-js\barbarajs.min.js"></script>
+<script src="./bower_components/barbara-js/barbarajs.min.js"></script>
 ```
 
 Especifique o BarbaraJS como uma dependência do seu aplicativo:
