@@ -3,9 +3,9 @@ Barbara-JS
 
 Um framework para o AngularJS com novos serviços, diretivas e filtros.
 
-1. [Como usar](#usando)
-2. [$request Service](#developing)
-3. [bootstrap Service](#tests)
+1. [Como usar](#como-usar)
+2. [$request Service](#request-service)
+3. [bootstrap Service](#request-service)
 
 ## Como usar
 
