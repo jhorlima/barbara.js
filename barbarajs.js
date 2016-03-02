@@ -1,17 +1,11 @@
 /*
- BarbaraJS v1.0.1
+ BarbaraJS v1.1.0
  (c) 2016 Jhordan Lima. https://github.com/Jhorzyto/barbara.js
  License: MIT
 */
 
 //Iniciando o modulo Barbara-JS
 var barbaraJs = angular.module('Barbara-Js', []);
-
-//Configurações para CORS
-barbaraJs.config(function ($httpProvider) {
-    $httpProvider.defaults.useXDomain = true;
-    delete $httpProvider.defaults.headers.common['X-Requested-With'];
-});
 
 //Inicializador do barbaraJs
 barbaraJs.run(function(){
@@ -101,8 +95,11 @@ barbaraJs.factory("$request", function($http){
 
     //Atributos e métodos do $request
     return {
-        //Lista de parametros ou dados para enviar
+        //Lista de parametros para enviar
         parameter : {},
+
+        //Lista de dados para enviar
+        data : {},
 
         //Lista de cabeçalho adicional, caso necessário
         headers : {},
@@ -148,8 +145,15 @@ barbaraJs.factory("$request", function($http){
             return this;
         },
 
-        //Adicionar dados ou parametros para enviar
-        addData : function(param){
+        //Adicionar dados para enviar
+        addData : function(data){
+            //Verificar se o param é objeto, para adicionar ao dados/param para enviar
+            this.data = angular.isObject(data) ? data : {};
+            return this;
+        },
+
+        //Adicionar parametros para enviar
+        addParams : function(param){
             //Verificar se o param é objeto, para adicionar ao dados/param para enviar
             this.parameter = angular.isObject(param) ? param : {};
             return this;
@@ -255,6 +259,7 @@ barbaraJs.factory("$request", function($http){
             switch (request.method){
 
                 case 'GET' :
+                    angular.extend(request.parameter, request.data);
                     request.config.params = request.parameter;
                     $http.get(request.url, request.config)
                          .then(function(response){
@@ -265,7 +270,8 @@ barbaraJs.factory("$request", function($http){
                 break;
 
                 case 'POST' :
-                    $http.post(request.url, request.parameter, request.config)
+                    request.config.params = request.parameter;
+                    $http.post(request.url, request.data, request.config)
                         .then(function(response){
                             callbackSuccess(response, request, success, error);
                         }, function(response){
@@ -274,7 +280,8 @@ barbaraJs.factory("$request", function($http){
                 break;
 
                 case 'PUT' :
-                    $http.put(request.url, request.parameter, request.config)
+                    request.config.params = request.parameter;
+                    $http.put(request.url, request.data, request.config)
                         .then(function(response){
                             callbackSuccess(response, request, success, error);
                         }, function(response){
@@ -283,7 +290,8 @@ barbaraJs.factory("$request", function($http){
                 break;
 
                 case 'DELETE' :
-                    request.config.data = request.parameter;
+                    request.config.params = request.parameter;
+                    request.config.data = request.data;
                     $http.delete(request.url, request.config)
                         .then(function(response){
                             callbackSuccess(response, request, success, error);
@@ -538,6 +546,49 @@ barbaraJs.factory("bootstrap", function(){
                     }
                 }
             }
+        }
+    };
+});
+
+//Factory bootstrap para alguns recursos do framework css
+barbaraJs.factory("animateCss", function($timeout){
+    return {
+        //Estado da janela de animação atual
+        open : true,
+        //Estados de animação
+        animated : {
+            inAnimate : false,
+            opening   : false,
+            closing   : false
+        },
+        //Mudar status de animação
+        animateChange : function(){
+            var animateCss = this;
+            animateCss.animated.inAnimate = true;
+
+            if(this.open)
+                animateCss.animated.opening = true;
+            else
+                animateCss.animated.closing = true;
+
+            $timeout(function(){
+                animateCss.animated.opening   = false;
+                animateCss.animated.closing   = false;
+                animateCss.animated.inAnimate = false;
+            }, 700);
+
+        },
+        //Obter as classes de animação quando necessário. Parametros são os nomes das classes
+        animateClass : function(openingClass, closingClass){
+            var classes = {animated : this.animated.inAnimate};
+
+            if(angular.isDefined(openingClass) && angular.isString(openingClass))
+                classes[openingClass] = this.animated.opening;
+
+            if(angular.isDefined(closingClass) && angular.isString(closingClass))
+                classes[closingClass] = this.animated.closing;
+
+            return classes;
         }
     };
 });

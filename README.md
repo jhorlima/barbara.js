@@ -351,7 +351,7 @@ O `$request service` trabalha sobre $http do AngularJS para dar mais poder ao re
 O `bootstrap service` traz os atributos e métodos das diretivas do barbaraJs. Deve ser injetado no controller ou service sempre que existir a necessidade de usar uma diretiva inclusa no barbaraJS:
 
 ##### bootstrap.alert
-O `bootstrap.alert` precisa está incluso dentro do scope, como atributo `alert`. ex: $scope.alert ou $rootScope.alert.
+O `bootstrap.alert` trabalha com a diretiva alert-bootstrap do BarbaraJS, o alert é um componente do bootstrap que traz mensagens de forma mais elegante à página. O `bootstrap.alert` precisa está incluso dentro do scope, como atributo `alert`. ex: $scope.alert ou $rootScope.alert.
 É necessário adicionar a diretiva na view:
 ```html
 <div alert-bootstrap></div>
@@ -369,6 +369,171 @@ O `bootstrap.alert` precisa está incluso dentro do scope, como atributo `alert`
     app.controller('AppController', function($scope, bootstrap) {
     
         $scope.alert = bootstrap.alert();
+    
+        $scope.alert.changeType('success');
+        $scope.alert.changeTitle('Parabéns!');
+        $scope.alert.changeMessage('Ocorreu tudo certo.');
+        $scope.alert.changeShow(true);
+        
+        $scope.toggleAlert = function(){
+            $scope.alert.changeShow();
+        };
+        
+        $scope.dismissAlert = function(){
+            $scope.alert.changeShow(false);
+        };
+    
+    });
+    ```
+
+* **`alert.changeType(type)`**: Alterar o tipo da diretiva
+
+    Parâmetro | Tipo | Descrição
+    --- | --- | --- 
+    `type` | `string` | `Valores válidos para o type "success", "info", "warning", "danger". O valor precisa ser atender os requisitos do Bootstrap Alert. Mais:` http://getbootstrap.com/components/#alerts 
+    
+    `Sem retorno.`
+     
+    ```js
+    app.controller('AppController', function($scope, bootstrap) {
+    
+        $scope.alert = bootstrap.alert();
+    
+        $scope.alert.changeType('success');
+        $scope.alert.changeTitle('Parabéns!');
+        $scope.alert.changeMessage('Ocorreu tudo certo.');
+        $scope.alert.changeShow(true);
+        
+        $scope.infoAlert = function(){
+            $scope.alert.changeType('info');
+        };
+        
+        $scope.dangerAlert = function(){
+            $scope.alert.changeType('danger');
+        };
+    
+    });
+    ```
+    
+* **`alert.changeTitle(title)`**: Alterar o titulo da diretiva
+
+    Parâmetro | Tipo | Descrição
+    --- | --- | --- 
+    `title` | `string` | `Texto de titulo do alert`
+    
+    `Sem retorno.`
+     
+    ```js
+    app.controller('AppController', function($scope, bootstrap) {
+    
+        $scope.alert = bootstrap.alert();
+    
+        $scope.alert.changeType('success');
+        
+        $scope.alert.changeTitle('Parabéns!');
+        
+        $scope.alert.changeMessage('Ocorreu tudo certo.');
+        $scope.alert.changeShow(true);
+    
+    });
+    ```
+    
+* **`alert.changeMessage(message)`**: Alterar a mensagem da diretiva
+
+    Parâmetro | Tipo | Descrição
+    --- | --- | --- 
+    `message` | `string` | `Texto de mensagem do alert do alert`
+    
+    `Sem retorno.`
+     
+    ```js
+    app.controller('AppController', function($scope, bootstrap) {
+    
+        $scope.alert = bootstrap.alert();
+    
+        $scope.alert.changeType('success');
+        $scope.alert.changeTitle('Parabéns!');
+        
+        $scope.alert.changeMessage('Ocorreu tudo certo.');
+        
+        $scope.alert.changeShow(true);
+    
+    });
+    ```
+    
+* **`alert.responseSuccess(message)`**: Ajustar a diretiva para type = 'success', title='Parabéns!' e show = true. Recomendado para usar no callback de sucesso do `$request`
+
+    Parâmetro | Tipo | Descrição
+    --- | --- | --- 
+    `message` | `string` | `Texto de mensagem do alert do alert`
+    
+    `Sem retorno.`
+     
+    ```js
+    app.controller('AppController', function($scope, bootstrap) {
+    
+        $scope.alert = bootstrap.alert();
+        
+        //$scope.alert.changeType('success');
+        //$scope.alert.changeTitle('Parabéns!');        
+        //$scope.alert.changeMessage('Ocorreu tudo certo.');        
+        //$scope.alert.changeShow(true);
+        
+        $scope.alert.responseSuccess('Ocorreu tudo certo.'); //Esta linha é equivalente às 4 linhas comentadas acima.
+    
+    });
+    ```
+    
+* **`alert.responseError(meta)`**: Ajustar a diretiva para trabalhar com o meta do response. Recomendado para usar no callback de erro do `$request`
+
+    Parâmetro | Tipo | Descrição
+    --- | --- | --- 
+    `meta` | `object` | `Objeto meta recebido pelo $request no callback de erro`
+    
+    `Sem retorno.`
+     
+    ```js
+    app.controller('AppController', function($scope, bootstrap, $request) {
+    
+        $scope.alert = bootstrap.alert();
+        
+        var callbackSuccess = function(data, meta, response){
+            $scope.alert.responseSuccess('Ocorreu tudo certo.');
+        };       
+                
+        var callbackError = function(meta, status, response){
+            $scope.alert.responseError(meta);
+        };        
+         
+        $request.get('http://localhost/moca_bonita/')
+                .addData({
+                    page : 'pessoa', 
+                    action : 'read'
+                })
+                .send(callbackSuccess, callbackError);
+    
+    });
+    ```
+    
+##### bootstrap.loading
+O `bootstrap.loading` trabalha com a diretiva loading-bootstrap do BarbaraJS, o loading é um componente do bootstrap que traz uma barra de progresso de forma mais elegante à página. O `bootstrap.loading` precisa está incluso dentro do scope, como atributo `loading`. ex: $scope.loading ou $rootScope.loading.
+É necessário adicionar a diretiva na view:
+```html
+<div loading-bootstrap></div>
+```
+
+* **`loading.changeShow([show])`**: Alterar a visibilidade da diretiva
+
+    Parâmetro | Tipo | Descrição
+    --- | --- | --- 
+    `show` | `boolean` | `Valor booleano para mostrar ou não mostrar a diretiva na view. Caso show não for definido, a visibilidade será o oposto da atual.` 
+    
+    `Sem retorno.`
+     
+    ```js
+    app.controller('AppController', function($scope, bootstrap) {
+    
+        $scope.loading = bootstrap.loading();
     
         $scope.alert.changeType('success');
         $scope.alert.changeTitle('Parabéns!');

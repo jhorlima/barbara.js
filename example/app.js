@@ -8,13 +8,46 @@ app.service("AppService", function($request){
                 .load(load)
                 .send(success, error);
     };
+
+    this.getPopularPhotosInstagram = function(){
+
+        var apiUrl = 'https://demo9691796.mockable.io/getPopularPhotosInstagram';
+
+        var params = {
+            access_token : 'xxxxxxxxxxxx',
+            count : 5,
+            max_tag_id : 1160235423409901109
+        };
+
+        $request.get(apiUrl)
+                .addParams(params)
+                .addHeaders({
+                    Authorization : 'd2VudHdvcnRobWFuOkNoYW5nZV9tZQ==',
+                    Accept : 'application/json'
+                })
+                .send(callbackSuccess, callbackError);
+
+    };
+
+    var callbackSuccess = function(data, meta, response){
+        console.log(response);
+        console.log('ocorreu tudo certo!');
+    };
+
+    var callbackError = function(meta, code, response){
+        console.log(meta.error_message);
+    };
+
 });
 
-app.controller('AppController', function($scope, AppService, bootstrap) {
+app.controller('AppController', function($scope, AppService, bootstrap, animateCss) {
 
     $scope.alert = bootstrap.alert();
     $scope.loading = bootstrap.loading();
     $scope.pagination = bootstrap.pagination();
+    $scope.animate = animateCss;
+
+    AppService.getPopularPhotosInstagram();
 
     $scope.requestData = function(pagination){
 
@@ -33,8 +66,10 @@ app.controller('AppController', function($scope, AppService, bootstrap) {
 
     };
 
-    $scope.pagination.changeCallback($scope.requestData);
+    $scope.pagination.changePageCallback($scope.requestData);
 
     $scope.requestData($scope.pagination);
+
+
 
 });
