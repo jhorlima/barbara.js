@@ -30,8 +30,8 @@ app.service("AppService", function($request){
     };
 
     var callbackSuccess = function(data, meta, response){
-        console.log(response);
-        console.log('ocorreu tudo certo!');
+        //console.log(response);
+        //console.log('ocorreu tudo certo!');
     };
 
     var callbackError = function(meta, code, response){
@@ -45,7 +45,19 @@ app.controller('AppController', function($scope, AppService, bootstrap, animateC
     $scope.alert = bootstrap.alert();
     $scope.loading = bootstrap.loading();
     $scope.pagination = bootstrap.pagination();
-    $scope.animate = animateCss;
+    $scope.animateCss = animateCss;
+    $scope.checkboxs = false;
+
+    //$scope.$watch('checkboxs', function(value){
+    //    if(value == true){
+    //        $scope.hidePre = false;
+    //        $scope.animateCss.animateByKey('fadeInUp', 'google');
+    //
+    //    } else
+    //        $scope.animateCss.animateByKey('fadeOutDown', 'google', function(){
+    //            $scope.hidePre = true;
+    //        });
+    //});
 
     AppService.getPopularPhotosInstagram();
 

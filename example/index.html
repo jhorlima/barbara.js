@@ -19,8 +19,7 @@
     <div class="container-fluid">
 
         <input type="checkbox"
-               ng-model="animate.open"
-               ng-change="animate.animateChange()">
+               ng-model="checkboxs">
 
         <hr>
 
@@ -28,13 +27,16 @@
 
         <hr>
 
-        <div pagination-bootstrap></div>
+        <div pagination-bootstrap animate-css="google"
+                                  animate-animation="flip"
+                                  animate-listener="checkboxs"></div>
 
         <hr>
 
         <div loading-bootstrap></div>
 
-        <pre ng-class="animate.animateClass('pulse', 'bounceOut')">{{data | json}}</pre>
+        <pre>{{data | json}}</pre>
+
         <pre ng-init="completo = false">
             {{"2015-05-06"|timeago}}
             {{ "sfsdfsfsfsfsfsdfsdfsdfsfsdfsdfdf" | cuttext: completo: 10 }}

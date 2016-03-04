@@ -1,5 +1,5 @@
 /*
- BarbaraJS v1.1.0
+ BarbaraJS v1.1.1
  (c) 2016 Jhordan Lima. https://github.com/Jhorzyto/barbara.js
  License: MIT
 */
@@ -550,45 +550,65 @@ barbaraJs.factory("bootstrap", function(){
     };
 });
 
+/* As duas proximas bibliotecas funcionam com o https://daneden.github.io/animate.css/ */
 //Factory bootstrap para alguns recursos do framework css
 barbaraJs.factory("animateCss", function($timeout){
     return {
-        //Estado da janela de animação atual
-        open : true,
-        //Estados de animação
-        animated : {
-            inAnimate : false,
-            opening   : false,
-            closing   : false
+        //Lista de elementos para animação
+        element : {},
+
+        //Adicionar elemento na lista de elemento
+        addElement : function(element, key){
+            this.element[key] = element;
         },
-        //Mudar status de animação
-        animateChange : function(){
-            var animateCss = this;
-            animateCss.animated.inAnimate = true;
 
-            if(this.open)
-                animateCss.animated.opening = true;
-            else
-                animateCss.animated.closing = true;
+        //Animação em execução atual
+        currentAnimate : null,
 
-            $timeout(function(){
-                animateCss.animated.opening   = false;
-                animateCss.animated.closing   = false;
-                animateCss.animated.inAnimate = false;
-            }, 700);
+        //Chamar elemento por animação
+        animateByKey : function(animate, key, callbackEnd){
+            //Verificar se os atributos enviados são validos
+            if(angular.isString(key) && angular.isDefined(this.element[key]) && angular.isString(animate)){
+                var animationEnd = 'webkitAnimationEnd mozAnimationEnd MSAnimationEnd oanimationend animationend';
+                var thisObject = this;
+                var element = thisObject.element[key];
+                thisObject.currentAnimate = animate;
 
-        },
-        //Obter as classes de animação quando necessário. Parametros são os nomes das classes
-        animateClass : function(openingClass, closingClass){
-            var classes = {animated : this.animated.inAnimate};
+                angular.element(element)
+                       .addClass('animated ' + animate)
+                       .one(animationEnd, $timeout(function() {
+                           angular.element(element).removeClass('animated ' + animate);
+                           thisObject.currentAnimate = null;
 
-            if(angular.isDefined(openingClass) && angular.isString(openingClass))
-                classes[openingClass] = this.animated.opening;
+                           if(angular.isFunction(callbackEnd))
+                               callbackEnd(animate, key);
+                       }, 500));
 
-            if(angular.isDefined(closingClass) && angular.isString(closingClass))
-                classes[closingClass] = this.animated.closing;
+            }
+        }
+    };
+});
 
-            return classes;
+//Direitava animate-css necessária para o factory animateCss
+barbaraJs.directive('animateCss', function (animateCss) {
+    return {
+        restrict : 'A',
+        link : function(scope, element, attr){
+            //Verificar se há atributos
+            if(attr.animateCss.length && angular.isString(attr.animateCss)){
+                //Verficar se o scope pai definiu o animateCss
+                if(angular.isUndefined(scope.animateCss))
+                    scope.animateCss = animateCss;
+
+                //Adicionar o elemento na lista de animações
+                scope.animateCss.addElement(element, attr.animateCss);
+
+                //Escutar elemento pela propria view
+                if(angular.isDefined(attr.animateAnimation) && angular.isDefined(attr.animateListener))
+                    scope.$watch(attr.animateListener, function(){
+                        scope.animateCss.animateByKey(attr.animateAnimation, attr.animateCss);
+                    });
+            }
         }
     };
 });
