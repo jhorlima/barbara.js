@@ -1,5 +1,5 @@
 /*
- BarbaraJS v1.1.1
+ BarbaraJS v1.2.0
  (c) 2016 Jhordan Lima. https://github.com/Jhorzyto/barbara.js
  License: MIT
 */
@@ -40,7 +40,9 @@ barbaraJs.factory("$request", function($http){
     var getMetaResponse = function(response){
         return {
             code          : response.status,
-            error_message : response.status == 200 ? 'Bad structure response!' : response.statusText
+            error_message : response.status >= 200 &&  response.status <= 300 ?
+                'Estrutura de retorno inválida! Use "$request.checkResponse(false);" na requisição para permitir outros retornos' :
+                (response.statusText != "" ? response.statusText : "Não foi possivel realizar esta requisição! Código de erro " + response.status)
         };
     };
 
@@ -90,6 +92,11 @@ barbaraJs.factory("$request", function($http){
         if(angular.isDefined(request.callbackLoad))
             request.callbackLoad.loaded();
 
+        if(angular.isObject(response.data) && angular.isObject(response.data.meta)){
+            response.status     = angular.isDefined(response.data.meta.code) ? response.data.meta.code : response.status ;
+            response.statusText = angular.isDefined(response.data.meta.error_message) ? response.data.meta.error_message : response.statusText ;
+        }
+
         error(getMetaResponse(response), response.status, response);
     };
 
@@ -102,7 +109,9 @@ barbaraJs.factory("$request", function($http){
         data : {},
 
         //Lista de cabeçalho adicional, caso necessário
-        headers : {},
+        headers : {
+            "X-Requested-With" : "XMLHttpRequest"
+        },
 
         //Método de requisição atual
         method : 'GET',
@@ -126,6 +135,13 @@ barbaraJs.factory("$request", function($http){
         checkResponse : function(check){
             //Verifica se o atributo é valido ou não.
             this.checkMeta = check ? true : false;
+            return this;
+        },
+
+        //Habilitar cabeçalho do ajax
+        removeAjaxHeader : function () {
+            if(angular.isDefined(this.headers['X-Requested-With']))
+                delete this.headers['X-Requested-With'];
             return this;
         },
 
@@ -162,7 +178,15 @@ barbaraJs.factory("$request", function($http){
         //Adicionar cabeçalho adicional
         addHeaders : function(headers){
             //Verificar se o headers é objeto, para adicionar ao cabeçalho adicional
-            this.headers = angular.isObject(headers) ? headers : {};
+            if(angular.isObject(headers))
+                this.headers =  angular.extend(this.headers, headers);
+            return this;
+        },
+
+        //Adicionar Url manualmente
+        addUrl : function(url){
+            //Verificar se o headers é objeto, para adicionar ao cabeçalho adicional
+            this.url = angular.isString(url) ? url : this.url;
             return this;
         },
 
@@ -180,7 +204,7 @@ barbaraJs.factory("$request", function($http){
 
             //Verificar se onLoading e loaded são callbacks validos!
             if(!angular.isFunction(onLoading) || !angular.isFunction(loaded))
-                throw "Load Callback invalid!";
+                throw "Não foi possível adicionar as funções de carregamento!";
 
             //atribuindo os callbacks à variavel callbackLoad
             this.callbackLoad = {
@@ -194,7 +218,7 @@ barbaraJs.factory("$request", function($http){
         //Obter $request para requisição get
         get : function(url){
             //Verificar se o url é string para adicionar ao url atual.
-            this.url = angular.isString(url) ? url : this.url;
+            this.addUrl(url);
             //Mudar o método de requisição
             this.addMethod('GET');
             //Retornar copia do objeto.
@@ -204,7 +228,7 @@ barbaraJs.factory("$request", function($http){
         //Obter $request para requisição post
         post : function(url){
             //Verificar se o url é string para adicionar ao url atual.
-            this.url = angular.isString(url) ? url : this.url;
+            this.addUrl(url);
             //Mudar o método de requisição
             this.addMethod('POST');
             //Retornar copia do objeto.
@@ -214,7 +238,7 @@ barbaraJs.factory("$request", function($http){
         //Obter $request para requisição put
         put : function(url){
             //Verificar se o url é string para adicionar ao url atual.
-            this.url = angular.isString(url) ? url : this.url;
+            this.addUrl(url);
             //Mudar o método de requisição
             this.addMethod('PUT');
             //Retornar copia do objeto.
@@ -224,9 +248,19 @@ barbaraJs.factory("$request", function($http){
         //Obter $request para requisição delete
         delete : function(url){
             //Verificar se o url é string para adicionar ao url atual.
-            this.url = angular.isString(url) ? url : this.url;
+            this.addUrl(url);
             //Mudar o método de requisição
             this.addMethod('DELETE');
+            //Retornar copia do objeto.
+            return angular.copy(this);
+        },
+
+        //Obter $request para requisição jsonp
+        jsonp : function(url){
+            //Verificar se o url é string para adicionar ao url atual.
+            this.addUrl(url);
+            //Mudar o método de requisição
+            this.addMethod('JSONP');
             //Retornar copia do objeto.
             return angular.copy(this);
         },
@@ -238,7 +272,7 @@ barbaraJs.factory("$request", function($http){
 
             //Verificar se o parametro success é uma função
             if(!angular.isFunction(success))
-                throw "Success Callback invalid in $request!";
+                throw "É necessário definir um callback de sucesso no $request.send()!";
 
             //Caso não exista callback de erro, criar um.
             if(!angular.isFunction(error))
@@ -246,7 +280,7 @@ barbaraJs.factory("$request", function($http){
 
             //Verificar se algum url foi definido para continuar a requisição
             if(!angular.isDefined(request.url))
-                throw "No url defined in the request methods!";
+                throw "Nenhum URL foi definido!";
 
             //Verificar se algum callback de loading
             if(angular.isDefined(request.callbackLoad))
@@ -299,6 +333,31 @@ barbaraJs.factory("$request", function($http){
                             callbackError(response, request, error);
                         });
                 break;
+
+                case 'JSONP' :
+                    request.config.params = request.parameter;
+                    request.config.data   = request.data;
+                    request.config.params.callback = 'JSON_CALLBACK';
+                    $http.jsonp(request.url, request.config)
+                        .then(function(response){
+                            callbackSuccess(response, request, success, error);
+                        }, function(response){
+                            callbackError(response, request, error);
+                        });
+                break;
+
+                default :
+                    request.config.params = request.parameter;
+                    request.config.data   = request.data;
+                    request.config.method = request.method;
+                    request.config.url    = request.url;
+                    $http(request.config)
+                        .then(function(response){
+                            callbackSuccess(response, request, success, error);
+                        }, function(response){
+                            callbackError(response, request, error);
+                        });
+                break;
             }
         }
     };
@@ -345,7 +404,7 @@ barbaraJs.factory("bootstrap", function(){
                 //Personalizar alerta para response de sucesso
                 responseSuccess : function(message){
                     if(angular.isString(message)) {
-                        this.changeTitle('Parabéns!');
+                        this.changeTitle('Sucesso!');
                         this.changeType('success');
                         this.changeMessage(message);
                         this.changeShow(true);
@@ -354,15 +413,14 @@ barbaraJs.factory("bootstrap", function(){
 
                 //Personalizar alerta para response de erro
                 responseError : function(meta){
-                    this.changeTitle('Algo deu errado!');
+                    this.changeTitle('Algo não ocorreu bem!');
                     this.changeType('danger');
 
                     if(angular.isDefined(meta.error_message) && angular.isString(meta.error_message)){
                         this.changeMessage(meta.error_message);
                         this.changeType('warning');
                     } else
-                        this.changeMessage("Ocorreu um erro na requisição! Talvez o servidor " +
-                                           "esteja em manutenção.");
+                        this.changeMessage("Ocorreu um erro ao fazer uma requisição! Acompanhe o console do navegador para ter mais detalhes.");
                     this.changeShow(true);
                 }
             };
@@ -545,69 +603,6 @@ barbaraJs.factory("bootstrap", function(){
                             this.processPagination();
                     }
                 }
-            }
-        }
-    };
-});
-
-/* As duas proximas bibliotecas funcionam com o https://daneden.github.io/animate.css/ */
-//Factory bootstrap para alguns recursos do framework css
-barbaraJs.factory("animateCss", function($timeout){
-    return {
-        //Lista de elementos para animação
-        element : {},
-
-        //Adicionar elemento na lista de elemento
-        addElement : function(element, key){
-            this.element[key] = element;
-        },
-
-        //Animação em execução atual
-        currentAnimate : null,
-
-        //Chamar elemento por animação
-        animateByKey : function(animate, key, callbackEnd){
-            //Verificar se os atributos enviados são validos
-            if(angular.isString(key) && angular.isDefined(this.element[key]) && angular.isString(animate)){
-                var animationEnd = 'webkitAnimationEnd mozAnimationEnd MSAnimationEnd oanimationend animationend';
-                var thisObject = this;
-                var element = thisObject.element[key];
-                thisObject.currentAnimate = animate;
-
-                angular.element(element)
-                       .addClass('animated ' + animate)
-                       .one(animationEnd, $timeout(function() {
-                           angular.element(element).removeClass('animated ' + animate);
-                           thisObject.currentAnimate = null;
-
-                           if(angular.isFunction(callbackEnd))
-                               callbackEnd(animate, key);
-                       }, 500));
-
-            }
-        }
-    };
-});
-
-//Direitava animate-css necessária para o factory animateCss
-barbaraJs.directive('animateCss', function (animateCss) {
-    return {
-        restrict : 'A',
-        link : function(scope, element, attr){
-            //Verificar se há atributos
-            if(attr.animateCss.length && angular.isString(attr.animateCss)){
-                //Verficar se o scope pai definiu o animateCss
-                if(angular.isUndefined(scope.animateCss))
-                    scope.animateCss = animateCss;
-
-                //Adicionar o elemento na lista de animações
-                scope.animateCss.addElement(element, attr.animateCss);
-
-                //Escutar elemento pela propria view
-                if(angular.isDefined(attr.animateAnimation) && angular.isDefined(attr.animateListener))
-                    scope.$watch(attr.animateListener, function(){
-                        scope.animateCss.animateByKey(attr.animateAnimation, attr.animateCss);
-                    });
             }
         }
     };

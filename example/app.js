@@ -3,9 +3,13 @@ var app = angular.module('App-Example', ['Barbara-Js']);
 app.service("AppService", function($request){
 
     this.getData = function(data, success, error, load){
-        $request.get('http://localhost/moca_bonita/')
+        $request.get('http://localhost/misael/aplicacao/http_response/getInfo')
                 .addData(data)
                 .load(load)
+                .addHeaders({
+                    Authorization : 'd2VudHdvcnRobWFuOkNoYW5nZV9tZQ==',
+                    Accept : 'application/json'
+                })
                 .send(success, error);
     };
 
@@ -40,12 +44,11 @@ app.service("AppService", function($request){
 
 });
 
-app.controller('AppController', function($scope, AppService, bootstrap, animateCss) {
+app.controller('AppController', function($scope, AppService, bootstrap) {
 
     $scope.alert = bootstrap.alert();
     $scope.loading = bootstrap.loading();
     $scope.pagination = bootstrap.pagination();
-    $scope.animateCss = animateCss;
     $scope.checkboxs = false;
 
     //$scope.$watch('checkboxs', function(value){
@@ -81,7 +84,5 @@ app.controller('AppController', function($scope, AppService, bootstrap, animateC
     $scope.pagination.changePageCallback($scope.requestData);
 
     $scope.requestData($scope.pagination);
-
-
 
 });

@@ -1,9 +1,9 @@
 {
   "name": "barbara-js",
   "authors": [
-    "jhorzyto <jhorzyto@gmail.com>"
+    "Jhordan Lima <jhorzyto@gmail.com>"
   ],
-  "version" : "v1.1.1",
+  "version" : "v1.2.0",
   "description": "Framework AngularJS da UEMA::NTI",
   "main": "barbarajs.js",
   "moduleType": [],
@@ -24,6 +24,6 @@
     "tests"
   ],
   "dependencies": {
-    "angular": "^ 1.4.x"
+    "angular": "^ 1.5.x"
   }
 }
