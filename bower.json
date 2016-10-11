@@ -3,7 +3,7 @@
   "authors": [
     "Jhordan Lima <jhorzyto@gmail.com>"
   ],
-  "version" : "v1.2.0",
+  "version" : "v1.2.1",
   "description": "Framework AngularJS da UEMA::NTI",
   "main": "barbarajs.js",
   "moduleType": [],

@@ -1,8 +1,8 @@
 /*
- BarbaraJS v1.2.0
+ BarbaraJS v1.2.1
  (c) 2016 Jhordan Lima. https://github.com/Jhorzyto/barbara.js
  License: MIT
-*/
+ */
 
 //Iniciando o modulo Barbara-JS
 var barbaraJs = angular.module('Barbara-Js', []);
@@ -81,8 +81,19 @@ barbaraJs.factory("$request", function($http){
 
         }
         //Caso não atenda nenhum dos requisitos, retorna o callback de erro se for definido.
-        else
-            error(getMetaResponse(response), response.status, response);
+        else {
+            var meta = getMetaResponse(response);
+
+            //Caso seja definidos callbacks adicionais para determinados meta.code, serão executados aqui após.
+            angular.forEach(request.callback, function(callback) {
+                //Verificar se o meta.code do response for igual ao metacode definido pelo callback adicional.
+                // Se for, executa o callback
+                if(this.code == callback.metaCode)
+                    callback.callback(meta, response.status, response);
+            }, meta);
+
+            error(meta, response.status, response);
+        }
 
     };
 
@@ -97,7 +108,17 @@ barbaraJs.factory("$request", function($http){
             response.statusText = angular.isDefined(response.data.meta.error_message) ? response.data.meta.error_message : response.statusText ;
         }
 
-        error(getMetaResponse(response), response.status, response);
+        var meta = getMetaResponse(response);
+
+        //Caso seja definidos callbacks adicionais para determinados meta.code, serão executados aqui após.
+        angular.forEach(request.callback, function(callback) {
+            //Verificar se o meta.code do response for igual ao metacode definido pelo callback adicional.
+            // Se for, executa o callback
+            if(this.code == callback.metaCode)
+                callback.callback(meta, response.status, response);
+        }, meta);
+
+        error(meta, response.status, response);
     };
 
     //Atributos e métodos do $request
@@ -296,12 +317,12 @@ barbaraJs.factory("$request", function($http){
                     angular.extend(request.parameter, request.data);
                     request.config.params = request.parameter;
                     $http.get(request.url, request.config)
-                         .then(function(response){
-                             callbackSuccess(response, request, success, error);
-                         }, function(response){
-                             callbackError(response, request, error);
-                         });
-                break;
+                        .then(function(response){
+                            callbackSuccess(response, request, success, error);
+                        }, function(response){
+                            callbackError(response, request, error);
+                        });
+                    break;
 
                 case 'POST' :
                     request.config.params = request.parameter;
@@ -311,7 +332,7 @@ barbaraJs.factory("$request", function($http){
                         }, function(response){
                             callbackError(response, request, error);
                         });
-                break;
+                    break;
 
                 case 'PUT' :
                     request.config.params = request.parameter;
@@ -321,7 +342,7 @@ barbaraJs.factory("$request", function($http){
                         }, function(response){
                             callbackError(response, request, error);
                         });
-                break;
+                    break;
 
                 case 'DELETE' :
                     request.config.params = request.parameter;
@@ -332,7 +353,7 @@ barbaraJs.factory("$request", function($http){
                         }, function(response){
                             callbackError(response, request, error);
                         });
-                break;
+                    break;
 
                 case 'JSONP' :
                     request.config.params = request.parameter;
@@ -344,7 +365,7 @@ barbaraJs.factory("$request", function($http){
                         }, function(response){
                             callbackError(response, request, error);
                         });
-                break;
+                    break;
 
                 default :
                     request.config.params = request.parameter;
@@ -357,7 +378,7 @@ barbaraJs.factory("$request", function($http){
                         }, function(response){
                             callbackError(response, request, error);
                         });
-                break;
+                    break;
             }
         }
     };
@@ -500,8 +521,8 @@ barbaraJs.factory("bootstrap", function(){
                 //Alterar a página atual e validar a mesma
                 changeCurrentPage : function(currentPage){
                     this.currentPage = angular.isNumber(currentPage) && currentPage > 0
-                                                                     && currentPage <= this.pages ?
-                                       currentPage : this.currentPage;
+                    && currentPage <= this.pages ?
+                        currentPage : this.currentPage;
                     return currentPage == this.currentPage ? true : false;
                 },
 
