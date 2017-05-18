@@ -3,7 +3,7 @@
   "authors": [
     "Jhordan Lima <jhorzyto@gmail.com>"
   ],
-  "version" : "v1.2.1",
+  "version" : "v1.3",
   "description": "Framework AngularJS da UEMA::NTI",
   "main": "barbarajs.js",
   "moduleType": [],
@@ -24,6 +24,7 @@
     "tests"
   ],
   "dependencies": {
-    "angular": "^ 1.5.x"
+    "angular": "^ 1.6.x",
+    "angular-sanitize": "^1.6.x"
   }
 }

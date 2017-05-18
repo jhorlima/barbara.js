@@ -1,95 +1,103 @@
-/*
- BarbaraJS v1.2.1
- (c) 2016 Jhordan Lima. https://github.com/Jhorzyto/barbara.js
- License: MIT
+/**
+ * BarbaraJS v1.3
+ * (c) 2016 Jhordan Lima. https://github.com/Jhorzyto/barbara.js
+ * License: MIT
  */
 
 //Iniciando o modulo Barbara-JS
-var barbaraJs = angular.module('Barbara-Js', []);
-
-//Inicializador do barbaraJs
-barbaraJs.run(function(){
-    //Animação para icone de carregamento
-    //CSS não minificado
-    //
-    //.glyphicon.spinning {
-    //    animation: spin 1s infinite linear;
-    //    -webkit-animation: spin2 1s infinite linear;
-    //}
-    //
-    //@keyframes spin {
-    //    from { transform: scale(1) rotate(0deg); }
-    //    to { transform: scale(1) rotate(360deg); }
-    //}
-    //
-    //@-webkit-keyframes spin2 {
-    //    from { -webkit-transform: rotate(0deg); }
-    //    to { -webkit-transform: rotate(360deg); }
-    //}
-    //
-    var loadingStyle = "<style type='text/css'>.glyphicon.spinning{animation:spin 1s infinite linear;-webkit-animation:spin2 1s infinite linear}@keyframes spin{from{transform:scale(1) rotate(0)}to{transform:scale(1) rotate(360deg)}}@-webkit-keyframes spin2{from{-webkit-transform:rotate(0)}to{-webkit-transform:rotate(360deg)}}</style>";
-
-    //Atribuindo o style ao cabeçalho do HTML
-    angular.element(document).find('head').prepend(loadingStyle);
-});
+var barbaraJs = angular.module('Barbara-Js', ['ngSanitize']);
 
 //Factory request para requisições ajax.
 barbaraJs.factory("$request", function($http){
 
     //Gerar meta a partir do response
     var getMetaResponse = function(response){
+        var message = null;
+
+        if(response.statusText == ""){
+            message = 'Nenhum dado válido foi retornado pela requisição';
+        } else {
+            message = response.statusText;
+        }
+
         return {
-            code          : response.status,
-            error_message : response.status >= 200 &&  response.status <= 300 ?
-                'Estrutura de retorno inválida! Use "$request.checkResponse(false);" na requisição para permitir outros retornos' :
-                (response.statusText != "" ? response.statusText : "Não foi possivel realizar esta requisição! Código de erro " + response.status)
+            code    : response.status,
+            message : message
         };
+    };
+
+    //Gerar meta a partir do response
+    var getMeta = function(meta, response){
+
+        if(!angular.isDefined(meta.code)){
+            meta.code = response.status;
+        }
+
+        if(!angular.isDefined(meta.message)){
+            meta.message = response.statusText;
+        }
+
+        return meta;
     };
 
     //Callback quando o response.status for entre 200 e 299.
     var callbackSuccess = function(response, request, success, error){
+
         //Verificar se algum callback de loaded
-        if(angular.isDefined(request.callbackLoad))
+        if(angular.isDefined(request.callbackLoad)){
             request.callbackLoad.loaded();
+        }
 
         //Chamar callback de sucesso caso for escolhido para "não" verificar meta no response.data
-        if(!request.checkMeta)
+        if(!request.checkMeta){
             success(response);
+        }
 
         //Chamar callback de error caso o response.data não for um objeto (json)
-        else if(!angular.isObject(response.data))
+        else if(!angular.isObject(response.data)){
             error(getMetaResponse(response), response.status, response);
+        }
 
         //Verificar se há meta no response.data e se existe existe o atributo code para validar a requisição
-        else if(angular.isObject(response.data.meta) && angular.isDefined(response.data.meta.code)){
+        else if(angular.isObject(response.data.meta)){
+
+            var metaCode = angular.isDefined(response.data.meta.code) ? parseInt(response.data.meta.code) : 400;
+
+            response.data.meta.code = metaCode;
+
+            var meta = getMeta(response.data.meta, response);
 
             //Verificar se o meta.code corresponde ao código de sucesso, então chama o callback de sucesso
-            if(response.data.meta.code >= 200 && response.data.meta.code <= 299)
-                success(response.data.data, response.data.meta, response);
+            if(metaCode >= 200 && metaCode <= 299){
+                success(response.data.data, meta, response);
+            }
 
             //Caso o meta.code não estiver entre 200 a 299, retornar como callback de erro.
-            else
-                error(response.data.meta, response.status, response);
+            else {
+                error(meta, response.status, response);
+            }
 
             //Caso seja definidos callbacks adicionais para determinados meta.code, serão executados aqui após.
             angular.forEach(request.callback, function(callback) {
                 //Verificar se o meta.code do response for igual ao metacode definido pelo callback adicional.
                 // Se for, executa o callback
-                if(this.code == callback.metaCode)
-                    callback.callback(response.data.data, response.data.meta, response);
-            }, response.data.meta);
+                if(this.code == callback.metaCode){
+                    callback.callback(response.data.data, this, response);
+                }
+            }, meta);
 
         }
         //Caso não atenda nenhum dos requisitos, retorna o callback de erro se for definido.
         else {
-            var meta = getMetaResponse(response);
+            var meta = getMeta({}, response);
 
             //Caso seja definidos callbacks adicionais para determinados meta.code, serão executados aqui após.
             angular.forEach(request.callback, function(callback) {
                 //Verificar se o meta.code do response for igual ao metacode definido pelo callback adicional.
                 // Se for, executa o callback
-                if(this.code == callback.metaCode)
+                if(this.code == callback.metaCode){
                     callback.callback(meta, response.status, response);
+                }
             }, meta);
 
             error(meta, response.status, response);
@@ -100,22 +108,23 @@ barbaraJs.factory("$request", function($http){
     //Callback quando o response.status for considerado como erro.
     var callbackError = function(response, request, error){
         //Verificar se algum callback de loaded
-        if(angular.isDefined(request.callbackLoad))
+        if(angular.isDefined(request.callbackLoad)){
             request.callbackLoad.loaded();
-
-        if(angular.isObject(response.data) && angular.isObject(response.data.meta)){
-            response.status     = angular.isDefined(response.data.meta.code) ? response.data.meta.code : response.status ;
-            response.statusText = angular.isDefined(response.data.meta.error_message) ? response.data.meta.error_message : response.statusText ;
         }
 
-        var meta = getMetaResponse(response);
+        if(!angular.isObject(response.data)){
+            response.data = {};
+        }
+
+        var meta = angular.isObject(response.data.meta) ? getMeta(response.data.meta, response) : getMetaResponse(response);
 
         //Caso seja definidos callbacks adicionais para determinados meta.code, serão executados aqui após.
         angular.forEach(request.callback, function(callback) {
             //Verificar se o meta.code do response for igual ao metacode definido pelo callback adicional.
             // Se for, executa o callback
-            if(this.code == callback.metaCode)
+            if(this.code == callback.metaCode){
                 callback.callback(meta, response.status, response);
+            }
         }, meta);
 
         error(meta, response.status, response);
@@ -125,6 +134,9 @@ barbaraJs.factory("$request", function($http){
     return {
         //Lista de parametros para enviar
         parameter : {},
+
+        //Encode URL
+        urlencoded : false,
 
         //Lista de dados para enviar
         data : {},
@@ -151,6 +163,19 @@ barbaraJs.factory("$request", function($http){
 
         //Configurações adicional para requisição
         config : {},
+
+        //Mudar a verificação do meta no response.data
+        urlEncoded : function(){
+            this.addHeaders({'Content-Type': 'application/x-www-form-urlencoded'});
+            //Verifica se o atributo é valido ou não.
+            this.urlencoded = function (obj) {
+                var str = [];
+                for (var p in obj)
+                    str.push(encodeURIComponent(p) + "=" + encodeURIComponent(obj[p]));
+                return str.join("&");
+            };
+            return this;
+        },
 
         //Mudar a verificação do meta no response.data
         checkResponse : function(check){
@@ -292,23 +317,31 @@ barbaraJs.factory("$request", function($http){
             var request = this;
 
             //Verificar se o parametro success é uma função
-            if(!angular.isFunction(success))
+            if(!angular.isFunction(success)){
                 throw "É necessário definir um callback de sucesso no $request.send()!";
+            }
 
             //Caso não exista callback de erro, criar um.
-            if(!angular.isFunction(error))
+            if(!angular.isFunction(error)){
                 error = function(){};
+            }
 
             //Verificar se algum url foi definido para continuar a requisição
-            if(!angular.isDefined(request.url))
+            if(!angular.isDefined(request.url)){
                 throw "Nenhum URL foi definido!";
+            }
 
             //Verificar se algum callback de loading
-            if(angular.isDefined(request.callbackLoad))
+            if(angular.isDefined(request.callbackLoad)){
                 request.callbackLoad.onLoading();
+            }
 
             //Ajustar as configurações adicionais da requisição
             request.config.headers = request.headers;
+
+            if(request.urlencoded){
+                request.config.transformRequest = request.urlencoded;
+            }
 
             //Escolher qual método executar de acordo com o armazenado em request.method
             switch (request.method){
@@ -440,8 +473,26 @@ barbaraJs.factory("bootstrap", function(){
                     if(angular.isDefined(meta.error_message) && angular.isString(meta.error_message)){
                         this.changeMessage(meta.error_message);
                         this.changeType('warning');
+
+                    } else if(angular.isDefined(meta.error_message) && angular.isArray(meta.error_message)){
+                        var messages = meta.error_message;
+
+                        this.changeTitle(messages.shift());
+                        this.changeMessage(messages.join("<br>"));
+                        this.changeType('warning');
+
+                    } else if(angular.isDefined(meta.message) && angular.isString(meta.message)){
+                        this.changeMessage(meta.message);
+                        this.changeType('warning');
+                    } else if(angular.isDefined(meta.message) && angular.isArray(meta.message)){
+                        var messages = meta.message;
+
+                        this.changeTitle(messages.shift());
+                        this.changeMessage(messages.join("<br>"));
+                        this.changeType('warning');
+
                     } else
-                        this.changeMessage("Ocorreu um erro ao fazer uma requisição! Acompanhe o console do navegador para ter mais detalhes.");
+                        this.changeMessage("Ocorreu um erro na requisição!");
                     this.changeShow(true);
                 }
             };
@@ -640,10 +691,11 @@ barbaraJs.directive('alertBootstrap', function () {
         //  <button type='button' class='close' ng-click='alert.changeShow()'>
         //      <span aria-hidden='true'>&times;</span>
         //  </button>
-        //  <strong>{{alert.title}}</strong> {{alert.message}}
+        //  <strong>{{alert.title}}</strong>
+        //  <p ng-bind-html='alert.message'></p>
         //</div>
         //
-        template : "<div class='alert alert-{{alert.type}} alert-dismissible' role='alert' ng-if='alert.show'><button type='button' class='close' ng-click='alert.changeShow()'><span aria-hidden='true'>&times;</span></button><strong>{{alert.title}}</strong> {{alert.message}}</div>"
+        template : "<div class='alert alert-{{alert.type}} alert-dismissible' role='alert' ng-if='alert.show'><button type='button' class='close' ng-click='alert.changeShow()'><span aria-hidden='true'>&times;</span></button><strong>{{alert.title}}</strong> <p ng-bind-html='alert.message'></p></div>"
     };
 });
 
@@ -656,11 +708,12 @@ barbaraJs.directive('loadingBootstrap', function () {
         //
         //<div class='progress' ng-if='loading.show'>
         //    <div class='progress-bar progress-bar-striped active' role='progressbar' style='width: 100%'>
-        //        <i class='glyphicon glyphicon-refresh spinning'></i> <strong>{{loading.message}}</strong>
+        //        <i class='glyphicon glyphicon-refresh spinning'></i>
+        //        <strong ng-bind-html='loading.message'></strong>
         //    </div>
         //</div>
         //
-        template : "<div class='progress' ng-if='loading.show'> <div class='progress-bar progress-bar-striped active' role='progressbar' style='width: 100%'><i class='glyphicon glyphicon-refresh spinning'></i> <strong>{{loading.message}}</strong></div></div>"
+        template : "<div class='progress' ng-if='loading.show'> <div class='progress-bar progress-bar-striped active' role='progressbar' style='width: 100%'><i class='glyphicon glyphicon-refresh spinning'></i> <strong ng-bind-html='loading.message'></strong></div></div>"
     };
 });
 

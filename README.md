@@ -9,17 +9,16 @@ Um framework para o AngularJS com novos serviços, diretivas e filtros.
 
 ## Como usar
 
-Primeiro, instale com o Bower:
+Primeiro, instale o barbara-js com o Bower:
 
 ```
-bower install barbara-js
+bower install barbara-js --save
 ```
-
-
 
 Em seguida, referenciar o script minificado:
 
 ```html
+<script src="./bower_components/angular-sanitize/angular-sanitize.min.js"></script>
 <script src="./bower_components/barbara-js/barbarajs.min.js"></script>
 ```
 
@@ -345,6 +344,26 @@ O `$request service` trabalha sobre $http do AngularJS para dar mais poder ao re
             .send(callbackSuccess, callbackError);
             
     ```
+* **`$request.urlEncoded()`**: Fazer a requisição com dados x-www-form-urlencoded.
+
+    ```js
+    var callbackSuccess = function(data, meta, response){
+        console.log(data);
+    };
+
+    var callbackError = function(meta, status, response){
+        console.log(meta);
+    };
+
+    $request.post('http://localhost/moca_bonita/')
+            .urlEncoded()
+            .addData({
+                page : 'pessoa',
+                action : 'read'
+            })
+            .send(callbackSuccess, callbackError);
+
+    ```
 
 #### bootstrap Service
 
@@ -534,148 +553,93 @@ O `bootstrap.loading` trabalha com a diretiva loading-bootstrap do BarbaraJS, o 
     app.controller('AppController', function($scope, bootstrap) {
     
         $scope.loading = bootstrap.loading();
-    
-        $scope.alert.changeType('success');
-        $scope.alert.changeTitle('Parabéns!');
-        $scope.alert.changeMessage('Ocorreu tudo certo.');
-        $scope.alert.changeShow(true);
-        
-        $scope.toggleAlert = function(){
-            $scope.alert.changeShow();
-        };
-        
-        $scope.dismissAlert = function(){
-            $scope.alert.changeShow(false);
-        };
-    
+
+        $scope.loading.changeShow(true);
     });
     ```
-
-* **`alert.changeType(type)`**: Alterar o tipo da diretiva
+    
+* **`loading.changeMessage(message)`**: Alterar a mensagem da diretiva
 
     Parâmetro | Tipo | Descrição
     --- | --- | --- 
-    `type` | `string` | `Valores válidos para o type "success", "info", "warning", "danger". O valor precisa ser atender os requisitos do Bootstrap Alert. Mais:` http://getbootstrap.com/components/#alerts 
+    `message` | `string` | `Texto de mensagem do loading`
     
     `Sem retorno.`
      
     ```js
     app.controller('AppController', function($scope, bootstrap) {
     
-        $scope.alert = bootstrap.alert();
-    
-        $scope.alert.changeType('success');
-        $scope.alert.changeTitle('Parabéns!');
-        $scope.alert.changeMessage('Ocorreu tudo certo.');
-        $scope.alert.changeShow(true);
+        $scope.loading = bootstrap.loading();
         
-        $scope.infoAlert = function(){
-            $scope.alert.changeType('info');
-        };
+        $scope.loading.changeMessage('Ocorreu tudo certo.');
         
-        $scope.dangerAlert = function(){
-            $scope.alert.changeType('danger');
-        };
+        $scope.loading.changeShow(true);
     
     });
     ```
     
-* **`alert.changeTitle(title)`**: Alterar o titulo da diretiva
+* **`loading.onLoading(message)`**: Alterar a visibilidade da diretiva para true e mostra a mensagem do loading.
 
     Parâmetro | Tipo | Descrição
     --- | --- | --- 
-    `title` | `string` | `Texto de titulo do alert`
+    `message` | `string` | `Texto de mensagem do loading`
     
     `Sem retorno.`
      
     ```js
     app.controller('AppController', function($scope, bootstrap) {
     
-        $scope.alert = bootstrap.alert();
-    
-        $scope.alert.changeType('success');
+        $scope.loading = bootstrap.loading();
         
-        $scope.alert.changeTitle('Parabéns!');
-        
-        $scope.alert.changeMessage('Ocorreu tudo certo.');
-        $scope.alert.changeShow(true);
+        $scope.loading.onLoading('Carregando dados...');
     
     });
     ```
     
-* **`alert.changeMessage(message)`**: Alterar a mensagem da diretiva
+* **`alert.loading()`**: Esconder barra de carregamento
 
-    Parâmetro | Tipo | Descrição
-    --- | --- | --- 
-    `message` | `string` | `Texto de mensagem do alert do alert`
-    
-    `Sem retorno.`
-     
-    ```js
-    app.controller('AppController', function($scope, bootstrap) {
-    
-        $scope.alert = bootstrap.alert();
-    
-        $scope.alert.changeType('success');
-        $scope.alert.changeTitle('Parabéns!');
-        
-        $scope.alert.changeMessage('Ocorreu tudo certo.');
-        
-        $scope.alert.changeShow(true);
-    
-    });
-    ```
-    
-* **`alert.responseSuccess(message)`**: Ajustar a diretiva para type = 'success', title='Parabéns!' e show = true. Recomendado para usar no callback de sucesso do `$request`
-
-    Parâmetro | Tipo | Descrição
-    --- | --- | --- 
-    `message` | `string` | `Texto de mensagem do alert do alert`
-    
-    `Sem retorno.`
-     
-    ```js
-    app.controller('AppController', function($scope, bootstrap) {
-    
-        $scope.alert = bootstrap.alert();
-        
-        //$scope.alert.changeType('success');
-        //$scope.alert.changeTitle('Parabéns!');        
-        //$scope.alert.changeMessage('Ocorreu tudo certo.');        
-        //$scope.alert.changeShow(true);
-        
-        $scope.alert.responseSuccess('Ocorreu tudo certo.'); //Esta linha é equivalente às 4 linhas comentadas acima.
-    
-    });
-    ```
-    
-* **`alert.responseError(meta)`**: Ajustar a diretiva para trabalhar com o meta do response. Recomendado para usar no callback de erro do `$request`
-
-    Parâmetro | Tipo | Descrição
-    --- | --- | --- 
-    `meta` | `object` | `Objeto meta recebido pelo $request no callback de erro`
-    
-    `Sem retorno.`
-     
     ```js
     app.controller('AppController', function($scope, bootstrap, $request) {
     
-        $scope.alert = bootstrap.alert();
-        
-        var callbackSuccess = function(data, meta, response){
-            $scope.alert.responseSuccess('Ocorreu tudo certo.');
-        };       
-                
-        var callbackError = function(meta, status, response){
-            $scope.alert.responseError(meta);
-        };        
-         
-        $request.get('http://localhost/moca_bonita/')
-                .addData({
-                    page : 'pessoa', 
-                    action : 'read'
-                })
-                .send(callbackSuccess, callbackError);
+
+        $scope.loading = bootstrap.loading();
+
+        $scope.loading.onLoading('Carregando dados...');
+
+        $scope.loading.loaded();
     
+    });
+    ```
+
+* **`loading.getRequestLoad(message)`**: Obter loading para o $request do barbara js.
+
+    Parâmetro | Tipo | Descrição
+    --- | --- | ---
+    `message` | `string` | `Texto de mensagem do loading`
+
+    `Sem retorno.`
+
+    ```js
+    app.controller('AppController', function($scope, $request) {
+
+         $scope.alert = bootstrap.alert();
+         $scope.loading = bootstrap.loading();
+
+         var callbackSuccess = function(data, meta, response){
+             $scope.alert.responseSuccess('Ocorreu tudo certo.');
+         };
+
+         var callbackError = function(meta, status, response){
+             $scope.alert.responseError(meta);
+         };
+
+         $request.get('http://localhost/moca_bonita/')
+                 .addData({
+                     page : 'pessoa',
+                     action : 'read'
+                 })
+            .load($scope.loading.getRequestLoad('Carregando os dados...'))
+            .send(callbackSuccess, callbackError);
+
     });
     ```
