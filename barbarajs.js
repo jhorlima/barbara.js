@@ -1,9 +1,8 @@
 /**
- * BarbaraJS v1.3
- * (c) 2016 Jhordan Lima. https://github.com/Jhorzyto/barbara.js
+ * BarbaraJS v1.4.0
+ * (c) 2016-2017 Jhordan Lima. https://github.com/jhorlima/barbara.js
  * License: MIT
  */
-
 //Iniciando o modulo Barbara-JS
 var barbaraJs = angular.module('Barbara-Js', ['ngSanitize']);
 
@@ -14,8 +13,8 @@ barbaraJs.factory("$request", function($http){
     var getMetaResponse = function(response){
         var message = null;
 
-        if(response.statusText == ""){
-            message = 'Nenhum dado válido foi retornado pela requisição';
+        if(response.statusText === ""){
+            message = "Não foi possivel realizar esta requisição! Código de erro " + response.status;
         } else {
             message = response.statusText;
         }

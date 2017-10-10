@@ -1,0 +1,44 @@
+{
+  "name": "barbara-js",
+  "version": "v1.4.0",
+  "description": "Recursos para o AngularJS",
+  "main": "barbarajs.js",
+  "scripts": {
+    "start": "node server"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Jhorzyto/barbara.js.git"
+  },
+  "keywords": [
+    "barbarajs",
+    "angularjs",
+    "javascript",
+    "js"
+  ],
+  "authors": [
+    "Jhordan Lima <jhorlima@icloud.com>"
+  ],
+  "license": "MIT",
+  "homepage": "https://github.com/Jhorzyto/barbara.js",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "angular": "^ 1.6.x",
+    "angular-sanitize": "^1.6.x"
+  },
+  "bugs": {
+    "url": "https://github.com/Jhorzyto/barbara.js/issues"
+  },
+  "devDependencies": {
+    "gulp": "^3.9.1",
+    "gulp-ng-annotate": "^2.0.0",
+    "gulp-rename": "^1.2.2",
+    "gulp-uglify": "^3.0.0"
+  }
+}

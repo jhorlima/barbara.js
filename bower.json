@@ -1,10 +1,10 @@
 {
   "name": "barbara-js",
   "authors": [
-    "Jhordan Lima <jhorzyto@gmail.com>"
+    "Jhordan Lima <jhorlima@icloud.com>"
   ],
-  "version" : "v1.3",
-  "description": "Framework AngularJS da UEMA::NTI",
+  "version" : "v1.4.0",
+  "description": "Recursos para o AngularJS",
   "main": "barbarajs.js",
   "moduleType": [],
   "keywords": [

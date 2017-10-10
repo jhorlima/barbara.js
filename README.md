@@ -9,17 +9,23 @@ Um framework para o AngularJS com novos serviços, diretivas e filtros.
 
 ## Como usar
 
-Primeiro, instale o barbara-js com o Bower:
+Primeiro, instale o barbara-js com o Bower ou NPM:
 
 ```
 bower install barbara-js --save
+npm install barbara-js --save
 ```
 
 Em seguida, referenciar o script minificado:
 
 ```html
+<!--Bower-->
 <script src="./bower_components/angular-sanitize/angular-sanitize.min.js"></script>
 <script src="./bower_components/barbara-js/barbarajs.min.js"></script>
+
+<!--NPM-->
+<script src="./node_modules/angular-sanitize/angular-sanitize.min.js"></script>
+<script src="./node_modules/barbara-js/barbarajs.min.js"></script>
 ```
 
 Especifique o BarbaraJS como uma dependência do seu aplicativo:
